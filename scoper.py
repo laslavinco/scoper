@@ -7,12 +7,36 @@ import sys
 import os
 import re
 import urllib2
+
+from urlparse import parse_qsl
 import requests
 import json
 import subprocess
+import oauth2 
+
+
 
 FFMPEG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "ffmpeg.exe"))
 
+RTOKEN_URL = 'https://api.twitter.com/oauth/request_token?oauth_callback=oob'
+ATOKEN_URL = 'https://api.twitter.com/oauth/access_token'
+AUTH_URL = 'https://api.twitter.com/oauth/authorize'
+VERIFY_URL = 'https://api.twitter.com/1.1/account/verify_credentials.json?' \
+             'include_entities=false&skip_status=true'
+PERI_LOGIN_URL = 'https://api.periscope.tv/api/v2/loginTwitter'
+PERI_VERIFY_URL = 'https://api.periscope.tv/api/v2/verifyUsername'
+PERI_VALIDATE_URL = 'https://api.periscope.tv/api/v2/validateUsername'
+
+
+"""
+todo :
+fix the bug where if /w/ is missing in url strip it with user name.. 
+ex:
+    https://www.pscp.tv/SweetDevilll/1lDxLMddkykKm
+    https://www.pscp.tv/w/1lDxLMddkykKm
+
+endone user name and stuff in video
+"""
 
 class URL(object):
     def __init__(self, url):
@@ -46,6 +70,12 @@ class URL(object):
         broadcast_data = request.json()
         return broadcast_data
 
+    def list_broadcasts(self):
+        api_request_url = "https://api.periscope.tv/api/v2/getBroadcasts"
+        request = requests.get(url=api_request_url)
+        print request.json()
+
+
     def get_broadcast_replay(self):
         '''
         REPLAY_ACCESS = "https://api.periscope.tv/api/v2/replayPlaylist.m3u8?broadcast_id={}&cookie={}"
@@ -66,14 +96,14 @@ class URL(object):
         return output_mov
 
 
-url = URL("https://www.pscp.tv/w/1yNGaXLQeYjKj")
+if not len(sys.argv) == 2:
+    url = URL(input("inster url"))
+else:
+    url = URL(str(sys.argv[1]))
 if url.validate_url():
     token_id = url.find_token_id()
     details = url.request_broadcast_details(token_id)
     download_url = details.get('hls_url', details.get('replay_url'))
-    __import__("pprint").pprint(details)
     output_path = "C:/Temp/new/"
     url.grab_scope(download_url, output_path, token_id)
 
-
- 
